@@ -1,0 +1,36 @@
+---
+driver:
+  name: docker
+  use_sudo: false
+
+driver_config:
+  provision_command:
+    - yum clean all
+    - yum install -y sudo openssh-server openssh-clients which curl
+    - curl -L https://www.opscode.com/chef/install.sh | bash -s -- -v 15.3.14
+    - env GEM_HOME=/tmp/verifier/gems GEM_PATH=/tmp/verifier/gems GEM_CACHE=/tmp/verifier/gems/cache /opt/chef/embedded/bin/gem install thor busser busser-serverspec serverspec bundler && chown -R kitchen:kitchen /tmp/verifier
+  product_name: chef
+  install_strategy: skip
+  use_sudo: false
+
+provisioner:
+  name: chef_zero
+  always_update_cookbooks: true
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: centos
+    driver_config:
+      image: centos:7
+      platform: centos
+
+suites:
+  - name: default
+    run_list:
+      - recipe[techu-minimal-chef::default]
+    verifier:
+      inspec_tests:
+        - test/recipes
+    attributes:
